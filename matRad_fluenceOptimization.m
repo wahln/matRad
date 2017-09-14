@@ -187,7 +187,9 @@ funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,options);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
 % Run IPOPT.
-[wOpt, info]            = ipopt(wInit,funcs,options);
+%[wOpt, info]            = ipopt(wInit,funcs,options);
+
+[wOpt, info] = matRad_optimizerCallWrapper(wInit,funcs,options,'fmincon');
 
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');
