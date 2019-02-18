@@ -4,13 +4,13 @@ group: travis_latest
 os:
   - linux
   - osx
-  - windows
-  language: sh
+#  - windows
+#  language: sh
   
-matrix:
-  allow_failures:
-    - os: windows
-    #- os: osx
+#matrix:
+#  allow_failures:
+#    - os: windows
+#    #- os: osx
  
 addons:
   apt:
@@ -22,17 +22,17 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "windows"]; then choco install octave.portable ; fi
   - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo bash ./before_install_linux.sh ; fi
   
-before_script:
-  - if [ "$TRAVIS_OS_NAME" == "linux"]; then ulimit -c unlimited -S ; fi
+#before_script:
+#  - if [ "$TRAVIS_OS_NAME" == "linux"]; then ulimit -c unlimited -S ; fi
   
   
-after_failure:
-  - |
-    if [ "$TRAVIS_OS_NAME" == "linux"]; then
-      COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) # find core file
-      gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli # print stack trace
-      tail runtests.log
-    fi
+# after_failure:
+  # - |
+    # if [ "$TRAVIS_OS_NAME" == "linux"]; then
+      # COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) # find core file
+      # gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli # print stack trace
+      # tail runtests.log
+    # fi
     
 script:
   - travis_wait 45 ./runtests.sh octave-cli
