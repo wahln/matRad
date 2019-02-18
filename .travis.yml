@@ -24,7 +24,7 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo chmod +x before_install.sh ; fi
   - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo chmod +x runtests.sh ; fi
   - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo chmod +x submodules/MCsquare/MCsquare_linux ; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo ./before_install.sh
+  - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo ./before_install.sh; fi
   
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "linux"]; then ulimit -c unlimited -S ; fi
