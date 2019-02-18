@@ -9,20 +9,21 @@ os:
 matrix:
   allow_failures:
     - os: windows
-    #- os: osx
- 
-addons:
-  apt:
-    packages:
-      - octave
+    - os: osx
+
+# manual octave installation since this installs octave 3.8    
+# addons:
+#   apt:
+#     packages:
+#       - octave
       
-before_install: 
+before_install:
+  - cd wahln
+  - cd matRad
   # Linux setup
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "Testing matRad on linux..." ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x before_install.sh ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x runtests.sh ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x submodules/MCsquare/MCsquare_linux ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo ./before_install.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x before_install_linux.sh ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo ./before_install_linux.sh; fi
   
   # OSX setup
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo "Testing matRad on Mac OSX..." ; fi
