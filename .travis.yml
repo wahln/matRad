@@ -10,16 +10,22 @@ matrix:
   allow_failures:
     - os: windows
     - os: osx
-
-# manual octave installation since this installs octave 3.8    
-# addons:
-#   apt:
-#     packages:
-#       - octave
+  include:
+    # works on Precise and Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
       
 before_install:
   # Linux setup
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "Testing matRad on linux..." ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then eval "${MATRIX_EVAL}" ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x before_install_linux.sh ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo ./before_install_linux.sh; fi
   
