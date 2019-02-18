@@ -76,12 +76,16 @@ matrix:
     
     - os: osx
       before_install:
-      - brew install octave > /dev/null
+        - brew install octave > /dev/null
+      script:
+        - travis_wait 45 ./runtests.sh octave-cli
     
     - os: windows
       language: sh
       before_install:
-      - choco install octave.portable
+        - choco install octave.portable
+      script:
+        - travis_wait 45 ./runtests.sh octave-cli
 
 notifications:
     slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
