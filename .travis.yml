@@ -1,15 +1,7 @@
 language: cpp
 group: travis_latest
-
-os:
-  - linux
-  - osx
-  - windows
   
 matrix:
-  allow_failures:
-    - os: windows
-    - os: osx
   include:
     # works on Precise and Trusty
     - os: linux
@@ -21,6 +13,11 @@ matrix:
             - g++-7
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    - os: osx
+    - os: windows
+  allow_failures:
+    - os: windows
+    - os: osx
       
 before_install:
   # Linux setup
