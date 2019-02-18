@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-
-sudo chmod +x runtests.sh
-sudo chmod +x submodules/MCsquare/MCsquare_linux
 sudo apt-get update -qq
 sudo apt-get install gdb # to capture backtrace of eventual failures
 # - sudo apt-get purge libopenblas-base # fixes PPA Octave 4.0 crash on Travis
@@ -11,7 +8,7 @@ sudo apt-get install gdb # to capture backtrace of eventual failures
 # - sudo apt-get update --yes --force-yes
 
 # dependencies
-sudo apt-get install octave --yes --force-yes
+# sudo apt-get install octave --yes --force-yes
 sudo apt-get install liboctave-dev --yes --force-yes
 sudo apt-get install git --yes --force-yes
 export MATRAD=`pwd`

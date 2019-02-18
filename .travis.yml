@@ -1,11 +1,10 @@
-language: c++
+language: cpp
 group: travis_latest
 
 os:
   - linux
   - osx
   - windows
-#  language: sh
   
 matrix:
   allow_failures:
@@ -20,20 +19,23 @@ addons:
 before_install: 
   - if [ "$TRAVIS_OS_NAME" == "osx"]; then brew install octave > /dev/null ; fi
   - if [ "$TRAVIS_OS_NAME" == "windows"]; then choco install octave.portable ; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo bash ./before_install_linux.sh ; fi
   
-#before_script:
-#  - if [ "$TRAVIS_OS_NAME" == "linux"]; then ulimit -c unlimited -S ; fi
+  # Linux setup
+  - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo chmod +x before_install.sh ; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo chmod +x runtests.sh ; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo chmod +x submodules/MCsquare/MCsquare_linux ; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo ./before_install.sh
+before_script:
+  - if [ "$TRAVIS_OS_NAME" == "linux"]; then ulimit -c unlimited -S ; fi
   
   
-# after_failure:
-  # - |
-    # if [ "$TRAVIS_OS_NAME" == "linux"]; then
-      # COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) # find core file
-      # gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli # print stack trace
-      # tail runtests.log
-    # fi
-    
+after_failure:
+  # find core file
+  - if [ "$TRAVIS_OS_NAME" == "linux"]; then COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) ; fi 
+  # print stack trace
+  - if [ "$TRAVIS_OS_NAME" == "linux"]; then gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli ; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux"]; then tail runtests.log ; fi
+  
 script:
   - travis_wait 45 ./runtests.sh octave-cli
 
