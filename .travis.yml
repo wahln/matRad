@@ -17,26 +17,32 @@ addons:
       - octave
       
 before_install: 
-  - if [ "$TRAVIS_OS_NAME" == "osx"]; then brew install octave > /dev/null ; fi
-  - if [ "$TRAVIS_OS_NAME" == "windows"]; then choco install octave.portable ; fi
-  
   # Linux setup
-  - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo chmod +x before_install.sh ; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo chmod +x runtests.sh ; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo chmod +x submodules/MCsquare/MCsquare_linux ; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo ./before_install.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "Testing matRad on linux..." ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x before_install.sh ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x runtests.sh ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x submodules/MCsquare/MCsquare_linux ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo ./before_install.sh; fi
+  
+  # OSX setup
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo "Testing matRad on Mac OSX..." ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install octave > /dev/null ; fi
+  
+  # Windows Setup
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then echo "Testing matRad on Windows..." ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install octave.portable ; fi  
   
 before_script:
-  - if [ "$TRAVIS_OS_NAME" == "linux"]; then ulimit -c unlimited -S ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ulimit -c unlimited -S ; fi
   
   
 after_failure:
   ## Linux stack trace
   # find core file
-  - if [ "$TRAVIS_OS_NAME" == "linux"]; then COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) ; fi 
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) ; fi 
   # print stack trace
-  - if [ "$TRAVIS_OS_NAME" == "linux"]; then gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli ; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux"]; then tail runtests.log ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tail runtests.log ; fi
   
 script:
   - travis_wait 45 ./runtests.sh octave-cli
