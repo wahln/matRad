@@ -18,8 +18,6 @@ matrix:
 #       - octave
       
 before_install:
-  - cd wahln
-  - cd matRad
   # Linux setup
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "Testing matRad on linux..." ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x before_install_linux.sh ; fi
