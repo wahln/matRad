@@ -6,6 +6,11 @@ os:
   - osx
   - windows
   language: sh
+  
+matrix:
+  allow_failures:
+    - os: windows
+    #- os: osx
  
 addons:
   apt:
