@@ -25,11 +25,13 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo chmod +x runtests.sh ; fi
   - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo chmod +x submodules/MCsquare/MCsquare_linux ; fi
   - if [ "$TRAVIS_OS_NAME" == "linux"]; then sudo ./before_install.sh
+  
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "linux"]; then ulimit -c unlimited -S ; fi
   
   
 after_failure:
+  ## Linux stack trace
   # find core file
   - if [ "$TRAVIS_OS_NAME" == "linux"]; then COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) ; fi 
   # print stack trace
