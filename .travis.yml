@@ -32,8 +32,8 @@ before_install:
   # OSX setup
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo "Testing matRad on Mac OSX..." ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install octave > /dev/null ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo chmod +x before_install_linux.sh ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo ./before_install_linux.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo chmod +x before_install_osx.sh ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo ./before_install_osx.sh; fi
   
   # Windows Setup
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then echo "Testing matRad on Windows..." ; fi
