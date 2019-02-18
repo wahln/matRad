@@ -4,13 +4,13 @@ group: travis_latest
 os:
   - linux
   - osx
-#  - windows
+  - windows
 #  language: sh
   
-#matrix:
-#  allow_failures:
-#    - os: windows
-#    #- os: osx
+matrix:
+  allow_failures:
+    - os: windows
+    #- os: osx
  
 addons:
   apt:
