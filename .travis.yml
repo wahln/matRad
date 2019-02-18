@@ -44,7 +44,12 @@ after_failure:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tail runtests.log ; fi
   
 script:
-  - travis_wait 45 ./runtests.sh octave-cli
+  # Linux script
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_wait 45 ./runtests.sh octave-cli ; fi
+  # OSX script
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 45 ./runtests.sh octave-cli ; fi
+  # Windows script
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then travis_wait 45 runtests.bat octave-cli ; fi
 
 #notifications:
 #    slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
