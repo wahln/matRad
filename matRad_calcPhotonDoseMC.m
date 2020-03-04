@@ -53,7 +53,7 @@ if exist('matRad_ompInterface','file') ~= 3
         
         currFolder = pwd;
         
-        if exist ("OCTAVE_VERSION", "builtin")
+        if exist ('OCTAVE_VERSION','builtin')
           ccName = eval('mkoctfile -p CC');
         else
           myCCompiler = mex.getCompilerConfigurations('C','Selected');
@@ -70,7 +70,7 @@ if exist('matRad_ompInterface','file') ~= 3
             %flags = [optPrefix 'COMPFLAGS="$COMPFLAGS /openmp" ' optPrefix 'OPTIMFLAGS="$OPTIMFLAGS /O2"'];
         else
             flags{1,1} = 'CFLAGS';
-            flags{1,2} = '-fopenmp -O2';
+            flags{1,2} = '-std=gnu99 -fopenmp -O2 -fPIC';
             flags{2,1} = 'LDFLAGS';
             flags{2,2} = '$LDFLAGS -fopenmp';
             %flags = [optPrefix 'CFLAGS="$CFLAGS -fopenmp -O2" ' optPrefix 'LDFLAGS="$LDFLAGS -fopenmp"'];
@@ -83,7 +83,7 @@ if exist('matRad_ompInterface','file') ~= 3
         %For Octave, the flags will be set in the environment, while they
         %will be parsed as string arguments in MATLAB
         for flag = 1:size(flags,1)
-            if exist ("OCTAVE_VERSION", "builtin")
+            if exist ('OCTAVE_VERSION','builtin')
                 setenv(flags{flag,1},flags{flag,2});
             else
                 flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
@@ -182,10 +182,8 @@ end
 
 % downsample ct
 for s = 1:dij.numOfScenarios
-    [xct,yct,zct] = meshgrid(dij.ctGrid.x,  dij.ctGrid.y,  dij.ctGrid.z);
-    [xd,yd,zd] = meshgrid(dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
-    HUcube{s} =  interp3(xct,yct,zct,  ct.cubeHU{s}, ...
-                         xd,yd,zd,'nearest');
+    HUcube{s} =  matRad_interp3(dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,ct.cubeHU{s}, ...
+                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
 end
 
 %% Setup OmpMC options / parameters

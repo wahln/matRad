@@ -43,6 +43,11 @@ pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCent
 pln.propOpt.runSequencing   = 0;
 pln.propOpt.runDAO          = 0;
 
+% dose calculation settings
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 
@@ -65,5 +70,11 @@ imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
 ixTarget     = cst{2,4}{1};
 doseInTarget = resultGUI.physicalDose(ixTarget);
 figure
-histogram(doseInTarget);
+[env, ~] = matRad_getEnvironment();
+hist(doseInTarget);
+
+ % use hist for compatibility with GNU Octave
 title('dose in target'),xlabel('[Gy]'),ylabel('#');
+
+%% compute integral energy
+matRad_calcIntEnergy(resultGUI.physicalDose,ct,pln);

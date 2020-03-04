@@ -46,6 +46,11 @@ pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCent
 pln.propOpt.runDAO          = 0;
 pln.propOpt.runSequencing   = 0;
 
+% dose calculation settings
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 
@@ -57,7 +62,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Calculate quality indicators 
 [dvh,qi]       = matRad_indicatorWrapper(cst,pln,resultGUI);
-ixRectum       = 8;
+ixRectum       = 1;
 display(qi(ixRectum).D_5);
 
 %%
@@ -65,8 +70,14 @@ display(qi(ixRectum).D_5);
 % will be better spared. We increase the penalty and lower the threshold 
 % of the squared overdose objective function. Afterwards we re-optimize 
 % the treatment plan and evaluate dose statistics one more time.
-cst{ixRectum,6}.penalty = 500;
-cst{ixRectum,6}.dose    = 40;
+
+objective = cst{ixRectum,6}{1}; %This gives a struct
+objective = matRad_DoseOptimizationFunction.createInstanceFromStruct(objective); %Now we turn it into a class
+objective = objective.setDoseParameters(40); %We can simply call this function to change the/all dose parameter(s)
+cst{ixRectum,6}{1} = struct(objective); % We put it back as struct
+
+cst{ixRectum,6}{1}.parameters{1} = 40;
+cst{ixRectum,6}{1}.penalty = 500;
 resultGUI               = matRad_fluenceOptimization(dij,cst,pln);
 [dvh2,qi2]              = matRad_indicatorWrapper(cst,pln,resultGUI);
 display(qi2(ixRectum).D_5);
@@ -109,9 +120,6 @@ figure,plot(profileOrginal,'LineWidth',2),grid on,hold on,
 %% Quantitative Comparison of results
 % Compare the two dose cubes using a gamma-index analysis.
 
-% add tools subdirectory
-addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
-
 doseDifference   = 2;
 distToAgreement  = 2;
 n                = 1;
@@ -120,9 +128,4 @@ n                = 1;
     resultGUI_noise.RBExDose,resultGUI.RBExDose,...
     [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
     [doseDifference distToAgreement],slice,n,'global',cst);
-
-
-
-
-
 

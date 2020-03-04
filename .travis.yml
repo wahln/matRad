@@ -28,14 +28,18 @@ before_install:
   
   # OSX setup
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo "Testing matRad on Mac OSX..." ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install octave > /dev/null ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install octave  > /dev/null ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm > /dev/null ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libomp > /dev/null ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo chmod +x before_install_osx.sh ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo ./before_install_osx.sh; fi
   
   # Windows Setup
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then echo "Testing matRad on Windows..." ; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install octave.portable ; fi  
-  
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then bash ./before_install_win_gitbash.sh ; fi
+
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ulimit -c unlimited -S ; fi
   
@@ -56,5 +60,5 @@ script:
   # Windows script
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then travis_wait 45 runtests.bat octave-cli ; fi
 
-#notifications:
-#    slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
+notifications:
+    slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ

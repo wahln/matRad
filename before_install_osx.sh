@@ -29,7 +29,9 @@ mkdir $IPOPTDIR/build
 cd $IPOPTDIR/build
 
 $IPOPTDIR/configure --prefix=/usr/local
-sudo make > makeIpopt.log
+
+sudo make &> makeIpopt.log
+
 sudo make test
 sudo make install
 sudo ldconfig
