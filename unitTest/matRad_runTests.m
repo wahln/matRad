@@ -81,12 +81,18 @@ addpath(['..' filesep  'submodules' filesep 'MOcov' filesep 'MOcov'])
 
 %profile on;
 
-success =  moxunit_runtests(['.' filesep 'moxunit'], ...             
+if matRad_cfg.isOctave
+	success =  moxunit_runtests(['.' filesep 'moxunit']);  
+else
+	success =  moxunit_runtests(['.' filesep 'moxunit'], ...             
              '-with_coverage',... 
              '-cover',[matRad_cfg.matRadRoot],...
              '-cover_method','profile',...
              '-cover_xml_file','coverage.xml',...
              '-cover_html_dir','coverage_html');   
+end
+
+
          
 if ~success
     errors{end+1} = 'Unit tests failed!';

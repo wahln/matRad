@@ -1,5 +1,5 @@
 
-function test_suite=test_function_matRad_interp3
+function test_suite=test_matRad_interp3
 % tests for MOxUnitFunctionHandleTestCase
 
     tic

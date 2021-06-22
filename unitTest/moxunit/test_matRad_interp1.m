@@ -2,7 +2,7 @@
 
 
 
-function test_suite=test_function_matRad_interp1
+function test_suite=test_matRad_interp1
 % tests for MOxUnitFunctionHandleTestCase
     try % assignment of 'localfunctions' is necessary in Matlab >= 2016
         test_functions=localfunctions();
