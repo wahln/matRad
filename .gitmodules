@@ -5,3 +5,9 @@
 	path = submodules/ompMC
 	url = https://github.com/e0404/ompMC
 	branch = dev_parallel
+[submodule "submodules/MOxUnit"]
+	path = submodules/MOxUnit
+	url = https://github.com/MOxUnit/MOxUnit.git
+[submodule "submodules/MOcov"]
+	path = submodules/MOcov
+	url = https://github.com/MOcov/MOcov.git

@@ -20,6 +20,8 @@ run(['..' filesep 'matRad_rc']);
 matRad_cfg = MatRad_Config.instance();
 matRad_cfg.setDefaultPropertiesForTesting();
 
+%%
+
 % supressing the inherent Ocatave warnings for division by zero
 if strcmp(matRad_getEnvironment,'OCTAVE')
     warning('off','Octave:divide-by-zero');
@@ -66,6 +68,30 @@ for testIx = 1:length(testScriptNames)
         errors{end+1} = errMsg;
     end
 end
+
+
+
+%% Exercise Unit Tests
+addpath(['..' filesep 'submodules' filesep 'MOxUnit' filesep 'MOxUnit']);
+moxunit_set_path;
+addpath(['..' filesep  'submodules' filesep 'MOcov' filesep 'MOcov'])
+%mocov_set_path;
+
+%run(['..' filesep 'matRad_rc']);
+
+%profile on;
+
+success =  moxunit_runtests(['.' filesep 'moxunit'], ...             
+             '-with_coverage',... 
+             '-cover',[matRad_cfg.matRadRoot],...
+             '-cover_method','profile',...
+             '-cover_xml_file','coverage.xml',...
+             '-cover_html_dir','coverage_html');   
+         
+if ~success
+    errors{end+1} = 'Unit tests failed!';
+end
+
 
 %Check if at least one script failed and report error
 if ~isempty(errors)
