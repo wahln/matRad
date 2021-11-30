@@ -39,6 +39,7 @@ function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)
 optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
+
 % initialize jacobian (only single scenario supported in optimization)
 jacob = sparse([]);
 
@@ -48,6 +49,8 @@ mAlphaDoseProjection{1}    = sparse([]);
 mSqrtBetaDoseProjection{1} = sparse([]);
 voxelID                     = [];
 constraintID                = [];
+
+jOmega = [];
 
 %For now constraints only support the first scenario
 scenario = 1;
@@ -62,14 +65,14 @@ for i = 1:size(cst,1)
         % loop over the number of constraints for the current VOI
         for j = 1:numel(cst{i,6})
             
-            obj = cst{i,6}{j}; %Get the Optimization Object
+            constraint = cst{i,6}{j}; %Get the Optimization Object
             
             % only perform computations for constraints
             %if ~isempty(strfind(obj.type,'constraint'))
-            if isa(obj,'DoseConstraints.matRad_DoseConstraint')
+            if isa(constraint,'DoseConstraints.matRad_DoseConstraint')
                 
                 % rescale dose parameters to biological optimization quantity if required
-                objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
+                constraint = optiProb.BP.setBiologicalDosePrescriptions(constraint,cst{i,5}.alphaX,cst{i,5}.betaX);
 
                 
                 % if conventional opt: just add constraints of nominal dose
@@ -80,7 +83,7 @@ for i = 1:size(cst,1)
                 d_i = d{scenario}(cst{i,4}{ctScen});
                 
                 %jacobVec =  matRad_jacobFunc(d_i,cst{i,6}{j},d_ref);
-                jacobSub = obj.computeDoseConstraintJacobian(d_i);
+                jacobSub = constraint.computeDoseConstraintJacobian(d_i);
                 
                 nConst = size(jacobSub,2);
                 
@@ -161,8 +164,25 @@ for i = 1:size(cst,1)
                     end
                 end
                 %}             
+            elseif isa(constraint,'OmegaConstraints.matRad_OmegaConstraint')
+                % rescale dose parameters to biological optimization quantity if required
+                constraint = optiProb.BP.setBiologicalDosePrescriptions(constraint,cst{i,5}.alphaX,cst{i,5}.betaX);
+                robustness = constraint.robustness;                
+                
+                %Force PROB
+                switch robustness
+                    case 'PROB'
+                        if ~exist('dOmega','var')
+                            optiProb.BP.computeProb(dij,w);
+                            [dExp,dOmega,vTot] = optiProb.BP.GetResultProb();
+                        end
+                        jOmega = [jOmega; constraint.computeTotalVarianceJacobian(vTot{i,1},numel(cst{i,4}{1})) * dOmega{i,1}'];
+                    otherwise
+                        matRad_cfg.dispError('Robustness setting %s not supported for Omega-Objectives!',robustness);
+                end
+            else
+                %Do Nothing
             end
-            
         end
         
     end
@@ -194,4 +214,10 @@ elseif isa(optiProb.BP,'matRad_EffectProjection')
         
     end
 end
+
+%Omega jacobian
+if ~isempty(jOmega)
+   jacob = [jacob; 2*jOmega];  
+end
+
 end

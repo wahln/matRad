@@ -39,7 +39,8 @@ optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
 % Initializes constraints
-c = [];
+cDose = [];
+cOmega = [];
 
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)
@@ -50,22 +51,42 @@ for  i = 1:size(cst,1)
         % loop over the number of constraints for the current VOI
         for j = 1:numel(cst{i,6})
             
-            obj = cst{i,6}{j};
+            constraint = cst{i,6}{j};
             
             % only perform computations for constraints
             % if ~isempty(strfind(obj.type,'constraint'))
-            if isa(obj,'DoseConstraints.matRad_DoseConstraint')
+            if isa(constraint,'DoseConstraints.matRad_DoseConstraint')
                 
                 % rescale dose parameters to biological optimization quantity if required
-                objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
+                constraint = optiProb.BP.setBiologicalDosePrescriptions(constraint,cst{i,5}.alphaX,cst{i,5}.betaX);
                 
                 % if conventional opt: just add constraints of nominal dose
                 %if strcmp(cst{i,6}(j).robustness,'none')
                 
-                d_i = d{1}(cst{i,4}{1});
+                %d_i = d{1}(cst{i,4}{1});
                 
                 %c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
-                c = [c; obj.computeDoseConstraintFunction(d_i)];
+                   
+                
+                switch constraint.robustness
+                    case 'none' % if conventional opt: just sum objectives of nominal dose
+                        d_i = d{1}(cst{i,4}{1});                        
+                        cDose = [cDose; constraint.computeDoseConstraintFunction(d_i)];
+                    case 'PROB' % if prob opt: sum up expectation value of objectives
+                        
+                        %Not supported so far
+                        matRad_cfg.dispError('Robustness setting %s not supported!',constraint.robustness);
+                        
+                        if ~exist('dExp','var')
+                            optiProb.BP.computeProb(dij,w);
+                            [dExp,~,vTot] = optiProb.BP.GetResultProb();
+                        end
+                        
+                        d_i = dExp{1}(cst{i,4}{1});
+                        cDose = [cDose; constraint.computeDoseConstraintFunction(d_i)];
+                    otherwise
+                        matRad_cfg.dispError('Robustness setting %s not supported!',constraint.robustness);
+                end
                 
                 
                 % if rob opt: add constraints of all dose scenarios
@@ -83,12 +104,31 @@ for  i = 1:size(cst,1)
                 
             else
                 %}
-            end
+            elseif isa(constraint,'OmegaConstraints.matRad_OmegaConstraint')
+                % rescale dose parameters to biological optimization quantity if required
+                constraint = optiProb.BP.setBiologicalDosePrescriptions(constraint,cst{i,5}.alphaX,cst{i,5}.betaX);
+                robustness = constraint.robustness;                
+                
+                %Force PROB
+                switch robustness
+                    case 'PROB'
+                        if ~exist('vTot','var')
+                            optiProb.BP.computeProb(dij,w);
+                            [dExp,~,vTot] = optiProb.BP.GetResultProb();
+                        end
+                        cOmega = [cOmega; constraint.computeTotalVarianceConstraint(vTot{i,1},numel(cst{i,4}{1}))];
+                        %f = f + p * w' * dOmega{i,1};
+                    otherwise
+                        matRad_cfg.dispError('Robustness setting %s not supported for Omega-Objectives!',robustness);
+                end
+            else
+                %Do Nothing    
+            end % if we are a constraint
             
-        end % if we are a constraint
+        end % over all defined constraints & objectives
         
-    end % over all defined constraints & objectives
+    end % if structure not empty and oar or target
     
-end % if structure not empty and oar or target
-
 end % over all structures
+
+c = [cDose; cOmega];

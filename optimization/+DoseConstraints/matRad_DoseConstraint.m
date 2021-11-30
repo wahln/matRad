@@ -45,6 +45,12 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
           error('Function needs to be implemented!');
         end
     end
+    
+    methods (Static)
+        function rob = availableRobustness()
+            rob = {'none','PROB'}; %By default, no robustness is available
+        end 
+    end
 
     methods (Access = public)
        

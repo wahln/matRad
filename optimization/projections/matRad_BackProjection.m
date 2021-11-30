@@ -17,6 +17,7 @@ classdef matRad_BackProjection < handle
    
     properties (SetAccess = protected)
         wCache
+        wCacheProb
         wGradCache  %different cache for optimal performance (if multiple evaluations of objective but not gradient are required)
         wGradCacheProb
         d
@@ -24,6 +25,7 @@ classdef matRad_BackProjection < handle
         wGradProb
         dExp
         dOmegaV
+        vTot
     end
     
     properties 
@@ -36,6 +38,7 @@ classdef matRad_BackProjection < handle
     methods
         function obj = matRad_BackProjection()
             obj.wCache = [];
+            obj.wCacheProb = [];
             obj.wGradCache = [];
             obj.wGradCacheProb = [];
             obj.d = [];
@@ -43,16 +46,22 @@ classdef matRad_BackProjection < handle
             obj.dOmegaV = [];
             obj.wGrad = [];            
             obj.wGradProb = [];
+            obj.vTot = [];
         end       
         
         function obj = compute(obj,dij,w)
             if ~isequal(obj.wCache,w)
                 obj.d = obj.computeResult(dij,w);
-                [obj.dExp,obj.dOmegaV] = obj.computeResultProb(dij,w);
                 obj.wCache = w;                
             end
         end
         
+        function obj = computeProb(obj,dij,w)
+            if ~isequal(obj.wCacheProb,w)
+                [obj.dExp,obj.dOmegaV,obj.vTot] = obj.computeResultProb(dij,w);
+            end
+        end
+               
         function obj = computeGradient(obj,dij,doseGrad,w)
             if ~isequal(obj.wGradCache,w)
                 obj.wGrad = obj.projectGradient(dij,doseGrad,w);
@@ -71,9 +80,10 @@ classdef matRad_BackProjection < handle
             d = obj.d;
         end
         
-        function [dExp,dOmegaV] = GetResultProb(obj)
+        function [dExp,dOmegaV,vTot] = GetResultProb(obj)
             dExp = obj.dExp;
             dOmegaV = obj.dOmegaV;
+            vTot = obj.vTot;
         end
 
         function wGrad = GetGradient(obj)
@@ -89,15 +99,18 @@ classdef matRad_BackProjection < handle
             d(obj.scenarios) = arrayfun(@(scen) computeSingleScenario(obj,dij,scen,w),obj.scenarios,'UniformOutput',false);
         end
         
-        function [dExp,dOmegaV] = computeResultProb(obj,dij,w)
+        function [dExp,dOmegaV,vTot] = computeResultProb(obj,dij,w)
             if isfield(dij,'physicalDoseExp')
                 dExp = cell(size(dij.physicalDoseExp));
-                [dExp(obj.scenarios),dOmegaVTmp] = arrayfun(@(scen) computeSingleScenarioProb(obj,dij,scen,w),obj.scenarios,'UniformOutput',false);
+                [dExp(obj.scenarios),dOmegaVTmp,vTotTmp] = arrayfun(@(scen) computeSingleScenarioProb(obj,dij,scen,w),obj.scenarios,'UniformOutput',false);
                 dOmegaV = cell(size(dij.physicalDoseOmega));
+                vTot = cell(size(dij.physicalDoseOmega));
                 dOmegaV(:,obj.scenarios) = dOmegaVTmp{:};
+                vTot(:,obj.scenarios) = vTotTmp{:};
             else
                 dExp = [];
                 dOmegaV = [];
+                vTot = [];
             end
         end
         
@@ -124,11 +137,11 @@ classdef matRad_BackProjection < handle
             error('Function needs to be implemented');
         end
         
-        function [dExp,dOmegaV] = computeSingleScenarioProb(obj,dij,scen,w)
+        function [dExp,dOmegaV,vTot] = computeSingleScenarioProb(obj,dij,scen,w)
             %warning('');
         end
         
-        function [dExp,dOmegaV] = projectSingleScenarioGradientProb(obj,dij,dExpGrad,dOmegaVgrad,scen,w)
+        function [dExp,dOmegaV,vTot] = projectSingleScenarioGradientProb(obj,dij,dExpGrad,dOmegaVgrad,scen,w)
             %warning('');
         end
     end

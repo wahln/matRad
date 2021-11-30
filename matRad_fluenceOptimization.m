@@ -50,7 +50,7 @@ for i = 1:size(cst,1)
         %In case it is a default saved struct, convert to object
         %Also intrinsically checks that we have a valid optimization
         %objective or constraint function in the end
-        if ~isa(obj,'matRad_DoseOptimizationFunction')
+        if ~isa(obj,'matRad_DoseOptimizationFunction') && ~isa(obj,'OmegaObjectives.matRad_OmegaObjective') && ~isa(obj,'OmegaConstraints.matRad_OmegaConstraint')
             try
                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
             catch
@@ -58,7 +58,9 @@ for i = 1:size(cst,1)
             end
         end
         
-        obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+        if isa(obj,'matRad_DoseOptimizationFunction')
+            obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+        end
         
         cst{i,6}{j} = obj;        
     end
@@ -81,11 +83,13 @@ for i = 1:size(cst,1)
         %Iterate through objectives/constraints
         fDoses = [];
         for fObjCell = cst{i,6}
-            dParams = fObjCell{1}.getDoseParameters();
-            %Don't care for Inf constraints
-            dParams = dParams(isfinite(dParams));
-            %Add do dose list
-            fDoses = [fDoses dParams];
+            if isa(fObjCell{1},'matRad_DoseOptimizationFunction')
+                dParams = fObjCell{1}.getDoseParameters();
+                %Don't care for Inf constraints
+                dParams = dParams(isfinite(dParams));
+                %Add do dose list
+                fDoses = [fDoses dParams];
+            end
         end
                 
         
@@ -194,8 +198,12 @@ for i = 1:size(cst,1)
     end
 end
 
-if FLAG_CALC_PROB
-    [dij] = matRad_calculateProbabilisticQuantities(dij,cst,pln);
+if ~isfield(pln.propDoseCalc,'precalcProbabilisticQuantitites')
+    pln.propDoseCalc.precalcProbabilisticQuantitites = false;
+end
+
+if FLAG_CALC_PROB && ~pln.propDoseCalc.precalcProbabilisticQuantitites
+    [dij] = matRad_calculateProbabilisticQuantitiesGPU(dij,cst,pln);
 end
 
 

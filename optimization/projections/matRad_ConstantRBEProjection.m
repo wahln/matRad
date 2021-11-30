@@ -30,16 +30,21 @@ classdef matRad_ConstantRBEProjection < matRad_BackProjection
             end 
         end
         
-        function [dExp,dOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
+        function [dExp,dOmegaV,vTot] = computeSingleScenarioProb(~,dij,scen,w)
             if ~isempty(dij.physicalDoseExp{scen})
                 dExp = dij.physicalDoseExp{scen}*(dij.RBE * w);
                 
-                for i = 1:size(dij.physicalDoseOmega,1)
+                omegaIx = find(~cellfun(@isempty,dij.physicalDoseOmega))';
+                dOmegaV = cell(size(dij.physicalDoseOmega));
+                vTot = cell(size(dij.physicalDoseOmega));
+                for i = omegaIx
                    dOmegaV{i,scen} = dij.physicalDoseOmega{i,scen} * (dij.RBE * w);
+                   vTot{i,scen} = (dij.RBE * w)' * dOmegaV{i,scen};
                 end 
             else
                 dExp = [];
                 dOmegaV = [];
+                vTot = [];
             end             
         end
         

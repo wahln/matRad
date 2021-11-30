@@ -78,6 +78,12 @@ for  i = 1:size(cst,1)
                  cu = [cu;optiFunc.upperBounds(numel(cst{i,4}{1}))];
                     
                 %end
+            elseif isa(optiFunc,'OmegaConstraints.matRad_OmegaConstraint')
+                % rescale dose parameters to biological optimization quantity if required
+                cl = [cl; optiFunc.lowerBounds()];
+                cu = [cu; optiFunc.upperBounds()];
+            else
+                %Do Nothing
             end
 
         end % over all objectives of structure

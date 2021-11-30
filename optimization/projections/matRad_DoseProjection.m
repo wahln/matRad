@@ -31,16 +31,18 @@ classdef matRad_DoseProjection < matRad_BackProjection
             end 
         end
         
-        function [dExp,dOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
+        function [dExp,dOmegaV,vTot] = computeSingleScenarioProb(~,dij,scen,w)
             if ~isempty(dij.physicalDoseExp{scen})
                 dExp = dij.physicalDoseExp{scen}*w;
                 
-                for i = 1:size(dij.physicalDoseOmega,2)
-                   dOmegaV{scen,i} = dij.physicalDoseOmega{scen,i} * w;
+                for i = 1:size(dij.physicalDoseOmega,1)
+                   dOmegaV{i,scen} = dij.physicalDoseOmega{i,scen} * w;
+                   vTot{i,scen} = w'*dOmegaV;
                 end 
             else
                 dExp = [];
                 dOmegaV = [];
+                vTot = [];
             end             
         end
         

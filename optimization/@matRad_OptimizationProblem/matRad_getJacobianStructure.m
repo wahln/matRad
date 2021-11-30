@@ -33,24 +33,44 @@ function jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
  % Initializes constraints	
 jacobStruct = sparse([]);	
- % compute objective function for every VOI.	
+jOmegaStruct = sparse([]);	
+ % compute objective function for every VOI.
+ 
 for i = 1:size(cst,1)	
      % Only take OAR or target VOI.	
     if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )	
          % loop over the number of constraints for the current VOI	
         for j = 1:numel(cst{i,6})	
             	
-            obj = cst{i,6}{j};	
+            constraint = cst{i,6}{j};	
             	
             % only perform computations for constraints	
-              if isa(obj,'DoseConstraints.matRad_DoseConstraint')	
+              if isa(constraint,'DoseConstraints.matRad_DoseConstraint')	
                 	
                 % get the jacobian structure depending on dose	
-                jacobDoseStruct = obj.getDoseConstraintJacobianStructure(numel(cst{i,4}{1}));	
+                jacobDoseStruct = constraint.getDoseConstraintJacobianStructure(numel(cst{i,4}{1}));	
                 nRows = size(jacobDoseStruct,2);	
                 jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{i,4}{1},:))),nRows,1)];	
                  
-             end	
+              elseif isa(constraint,'OmegaConstraints.matRad_OmegaConstraint')
+                  % rescale dose parameters to biological optimization quantity if required
+                  robustness = constraint.robustness;
+                  
+                  %Force PROB
+                  switch robustness
+                      case 'PROB'
+                          jOmegaStruct = [jOmegaStruct; ones(1,dij.totalNumOfBixels)];
+                      otherwise
+                          matRad_cfg.dispError('Robustness setting %s not supported for Omega-Objectives!',robustness);
+                  end
+              else
+                  %Do Nothing
+              end
          end	
      end	
- end
+end
+
+if ~isempty(jOmegaStruct)
+    jacobStruct = [jacobStruct; jOmegaStruct];
+end
+ 

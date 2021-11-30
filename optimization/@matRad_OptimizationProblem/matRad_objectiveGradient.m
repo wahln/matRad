@@ -38,11 +38,9 @@ matRad_cfg = MatRad_Config.instance();
 
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
+
 optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
-
-%Also get probabilistic quantities (nearly no overhead if empty)
-[dExp,dOmega] = optiProb.BP.GetResultProb();
 
 %Get the used scenarios
 useScen = optiProb.BP.scenarios;
@@ -113,15 +111,17 @@ for  i = 1:size(cst,1)
                         %opt
                         if ~exist('delta_exp','var')
                             delta_exp{1} = zeros(dij.doseGrid.numOfVoxels,1);
+                            optiProb.BP.computeProb(dij,w);
+                            [dExp,dOmega,vTot] = optiProb.BP.GetResultProb();
                         end
                         
                         d_i = dExp{1}(cst{i,4}{1});
                         
                         delta_exp{1}(cst{i,4}{1}) = delta_exp{1}(cst{i,4}{1}) + objective.computeDoseObjectiveGradient(d_i);
                         
-                        p = objective.penalty/numel(cst{i,4}{1});
+                        %p = objective.penalty/numel(cst{i,4}{1});
                         
-                        vOmega = vOmega + p * dOmega{i,1};
+                        %vOmega = vOmega + p * dOmega{i,1};
                         
                     case 'VWWC'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR
                         contourIx = unique(contourScen);
@@ -267,6 +267,28 @@ for  i = 1:size(cst,1)
                         matRad_cfg.dispError('Robustness setting %s not supported!',objective.robustness);
                         
                 end
+            elseif isa(objective,'OmegaObjectives.matRad_OmegaObjective')
+                % rescale dose parameters to biological optimization quantity if required
+                objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
+                robustness = objective.robustness;                
+                
+                %Force PROB
+                switch robustness
+                    case 'PROB'
+                        if ~exist('vTot','var')
+                            delta_exp{1} = zeros(dij.doseGrid.numOfVoxels,1);
+                            optiProb.BP.computeProb(dij,w);
+                            [dExp,dOmega,vTot] = optiProb.BP.GetResultProb();
+                        end
+                        %First get gradient w.r.t. total variance, then add
+                        %up
+                        tvGrad = objective.computeTotalVarianceGradient(vTot{i,1},numel(cst{i,4}{1}));
+                        vOmega = vOmega + tvGrad * dOmega{i,1};
+                    otherwise
+                        matRad_cfg.dispError('Robustness setting %s not supported for Omega-Objectives!',robustness);
+                end
+            else
+                % Do nothing
             end
         end
     end
@@ -306,8 +328,8 @@ for s = 1:numel(useScen)
     weightGradient = weightGradient + g{useScen(s)};
 end
 
-if vOmega ~= 0
-    optiProb.BP.computeGradientProb(dij,doseGradient,vOmega,w);
+if exist('delta_exp','var')
+    optiProb.BP.computeGradientProb(dij,delta_exp,vOmega,w);
     gProb = optiProb.BP.GetGradientProb();
     
     %Only implemented for first scenario now
