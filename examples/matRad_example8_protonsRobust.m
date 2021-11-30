@@ -59,7 +59,7 @@ cst{ixOAR,5}.betaX       = 0.0500;
 cst{ixOAR,5}.Priority    = 2;           % overlap priority for optimization - a higher number corresponds to a lower priority
 cst{ixOAR,5}.Visible     = 1;
 
-cst{ixOAR,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
+cst{ixOAR,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,0));
 
 cst{ixPTV,5}.TissueClass = 1;
 cst{ixPTV,5}.alphaX      = 0.1000;
@@ -157,11 +157,14 @@ pln.propOpt.runSequencing = 0;
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve 9 worst case scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'wcScen');                                         
+pln.multScen = matRad_multScen(ct,'rndScen');                                         
 
-pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
+%pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
+%pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
+%pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution = ct.resolution;
+
+pln.propDoseCalc.precalcProbabilisticQuantitites = true;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -173,22 +176,78 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
+
+cst{ixPTV,6}{1}.robustness  = 'none';
+cst{ixOAR,6}{1}.robustness  = 'none';
+
+cst{ixPTV,6}{2} = {};
+cst{ixPTV,6}(2) = [];
+
+cst{ixOAR,6}{2} = {};
+cst{ixOAR,6}(2) = [];
+
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+
+cnt = 1;
+for ix=find(pln.multScen.scenMask(:))'
+    tmp = matRad_calcCubes(resultGUI.w,dij,ix);
+    resultGUI.(['RBExD_' sprintf('%d',cnt)]) = tmp.RBExD;
+    cnt = cnt+1;
+end
 
 %% Trigger robust optimization
 % Make the objective to a composite worst case objective
+%cst{ixPTV,6}{1}.robustness  = 'COWC';
+%cst{ixOAR,6}{1}.robustness  = 'COWC';
+cst{ixPTV,6}{1}.robustness = 'PROB';
+cst{ixOAR,6}{1}.robustness = 'PROB';
+cst{ixPTV,6}{2} = OmegaConstraints.matRad_MinMaxTotalStandardDeviation(0,0.05*60/pln.numOfFractions);
+%cst{ixPTV,6}{2} = OmegaObjectives.matRad_TotalVariance;
+%cst{ixPTV,6}{2}.penalty = 500;
+
+cst{ixOAR,6}{2} = OmegaObjectives.matRad_TotalVariance;
+cst{ixOAR,6}{2}.penalty = 10;
+
+
+%% COWC
 cst{ixPTV,6}{1}.robustness  = 'COWC';
 cst{ixOAR,6}{1}.robustness  = 'COWC';
 
-% Create for each VOI a second objective and use 
-% voxel wise worst case optimization VWWC.
-% cst{ixPTV,6}(2,1) = cst{ixPTV,6}(1);
-% cst{ixOAR,6}(2,1) = cst{ixOAR,6}(1);
-% cst{ixPTV,6}(2,1).robustness  = 'VWWC';
-% cst{ixOAR,6}(2,1).robustness  = 'VWWC';
+cst{ixPTV,6}{2} = {};
+cst{ixPTV,6}(2) = [];
+
+cst{ixOAR,6}{2} = {};
+cst{ixOAR,6}(2) = [];
+
+
+
+
+%% VWWC
+
+cst{ixPTV,6}{1}.robustness  = 'VWWC';
+cst{ixOAR,6}{1}.robustness  = 'VWWC';
+
+cst{ixPTV,6}{2} = {};
+cst{ixPTV,6}(2) = [];
+
+cst{ixOAR,6}{2} = {};
+cst{ixOAR,6}(2) = [];
+
+%% VWWC
+
+cst{ixPTV,6}{1}.robustness  = 'STOCH';
+cst{ixOAR,6}{1}.robustness  = 'STOCH';
+
+cst{ixPTV,6}{2} = {};
+cst{ixPTV,6}(2) = [];
+
+cst{ixOAR,6}{2} = {};
+cst{ixOAR,6}(2) = [];
 
 %%
+tic;
 resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln);
+toc;
 
 %% combine resultGUI structures
 resultGUI = matRad_appendResultGUI(resultGUI,resultGUIrobust,0,'robust');
@@ -198,8 +257,12 @@ resultGUI = matRad_appendResultGUI(resultGUI,resultGUIrobust,0,'robust');
 plane      = 3;
 slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 
-figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD_beam1      ,plane,slice,[],[],colorcube,[],[0 max(resultGUI.RBExD_beam1(:))],[]);title('conventional plan - beam1')
-figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExD_beam1,plane,slice,[],[],colorcube,[],[0 max(resultGUIrobust.RBExD_beam1(:))],[]);title('robust plan - beam1')
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD_beam1      ,plane,slice,[],[],[],[],[0 max(resultGUI.RBExD_beam1(:))],[]);title('conventional plan - beam1')
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD_beam2      ,plane,slice,[],[],[],[],[0 max(resultGUI.RBExD_beam2(:))],[]);title('conventional plan - beam2')
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD      ,plane,slice,[],[],[],[],[0 max(resultGUI.RBExD(:))],[]);title('conventional plan - full')
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExD_beam1,plane,slice,[],[],[],[],[0 max(resultGUIrobust.RBExD_beam1(:))],[]);title('robust plan - beam1')
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExD_beam2,plane,slice,[],[],[],[],[0 max(resultGUIrobust.RBExD_beam2(:))],[]);title('robust plan - beam2')
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExD,plane,slice,[],[],[],[],[0 max(resultGUIrobust.RBExD(:))],[]);title('robust plan - full')
 
 % create an interactive plot to slide through individual scnearios
 f = figure;title('individual scenarios');
@@ -212,6 +275,23 @@ if strcmp(env,'MATLAB') || str2double(envver(1)) >= 5
         'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
     set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],doseWindow,[]));
 end
+%% 
+doseBins = linspace(0,3.5,100);
+figure; title('DVHs');
+dvh = matRad_calcDVH(cst,resultGUI.RBExD,'cum',doseBins);
+plot(dvh(2).doseGrid,dvh(2).volumePoints,'k:','LineWidth',2); hold on;
+dvh = matRad_calcDVH(cst,resultGUI.RBExD_robust,'cum',doseBins);
+plot(dvh(2).doseGrid,dvh(2).volumePoints,'k','LineWidth',2);
+
+for s = 2:pln.multScen.totNumScen
+    dvh = matRad_calcDVH(cst,resultGUI.(['RBExD_' num2str(s)]),'cum',doseBins);
+    plot(dvh(2).doseGrid,dvh(2).volumePoints,'r:','LineWidth',2);
+    
+    dvh = matRad_calcDVH(cst,resultGUI.(['RBExD_' num2str(s) '_robust']),'cum',doseBins);
+    plot(dvh(2).doseGrid,dvh(2).volumePoints,'r','LineWidth',2);
+end
+
+
 
 %% Indicator calculation and show DVH and QI
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust);
